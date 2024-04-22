@@ -47,13 +47,13 @@ for FC in range(len(files_to_read_pk)):
     assert cosmo in files_to_read_pk[FC]
     index = order_folders[cosmo]
     with h5py.File(root_Pk+currfile, 'r') as f:
-        for k in f.keys(): #tqdm(f.keys()):
-            dat = np.array(f[k])
-            if   'mono' in k: every_power_m.append(dat)
-            elif 'quad' in k: every_power_q.append(dat)
-            elif 'hexa' in k: every_power_h.append(dat)
-            elif 'k_coord' in k: k = dat
-            elif 'sn'    in k: every_sn.append(dat)
+        for key in f.keys(): #tqdm(f.keys()):
+            dat = np.array(f[key])
+            if   'mono' in key: every_power_m.append(dat)
+            elif 'quad' in key: every_power_q.append(dat)
+            elif 'hexa' in key: every_power_h.append(dat)
+            elif 'k_coord' in key: k = dat
+            elif 'sn'    in key: every_sn.append(dat)
     every_mean_m_pk[index] = np.mean(every_power_m, axis=0)
     every_mean_q_pk[index] = np.mean(every_power_q, axis=0)
     every_mean_h_pk[index] = np.mean(every_power_h, axis=0)
@@ -89,21 +89,18 @@ for i in cosmological_pars:
     if "Mnu" not in i and "Ob" not in i:
         ind = order_dimension[i]
         derivates_pk[ind] = (every_mean_m_pk[order_folders[i+"_p"]] - every_mean_m_pk[order_folders[i+"_m"]]) / (2 * VarCosmoPar['d_'+i] )
-        # derivates_poles_pk[ind]  = (every_mean_poles[i+"_p"] - every_mean_poles[i+"_m"]) / (2 * VarCosmoPar['d_'+i] )
+        # derivates_poles_pk[ind]  = (every_mean_poles[order_dimension[i+"_p"]] - every_mean_poles[order_dimension[i+"_m"]]) / (2 * VarCosmoPar['d_'+i] )
     elif "Mnu" in i:
         # # >>> ORDER 1 >>>
         if order_derivate == 1:
-            print('first')
             derivates_pk[order_dimension['Mnu']] = (every_mean_m_pk[order_folders["Mnu_p"]] - every_mean_m_pk[order_folders["zeldovich"]]) / (0.1)
             # derivates_poles_pk[order_dimension['Mnu']] = (every_mean_poles[order_folders["Mnu_p"]] - every_mean_poles[order_folders["zeldovich"]]) / (0.1)
         # >>> ORDER 2 >>>
         elif order_derivate == 2:
-            print('second')
             derivates_pk[order_dimension['Mnu']] = (-every_mean_m_pk[order_folders['Mnu_pp']] + 4 * every_mean_m_pk[order_folders["Mnu_p"]] - 3 * every_mean_m_pk[order_folders['zeldovich']]) / (2 * 0.1)
             # derivates_poles_pk[order_dimension['Mnu']] = (-every_mean_poles[order_folders['Mnu_pp']] + 4 * every_mean_poles[order_folders["Mnu_p"]] - 3 * every_mean_poles[order_folders['zeldovich']]) / (2 * 0.1)
         # # >>> ORDER 4 >>>
         elif order_derivate == 4:
-            print('third')
             derivates_pk[order_dimension['Mnu']] = (every_mean_m_pk[order_folders['Mnu_ppp']] - 12 * every_mean_m_pk[order_folders['Mnu_pp']] + 32 * every_mean_m_pk[order_folders["Mnu_p"]] - 21 * every_mean_m_pk[order_folders['zeldovich']]) / (12 * 0.1)
             # derivates_poles_pk[order_dimension['Mnu']] = (every_mean_poles[order_folders['Mnu_ppp']] - 12 * every_mean_poles[order_folders['Mnu_pp']] + 32 * every_mean_poles[order_folders["Mnu_p"]] - 21 * every_mean_poles[order_folders['zeldovich']]) / (12 * 0.1)
         else:
@@ -143,7 +140,8 @@ if max_fids < len(fiducial_m_pk):
     f_sn = f_sn[new_indices,:]
 
 # remove shot noise
-fiducial_m_pk = fiducial_m_pk - f_sn[:, None]
+if not  np.shape(sn) == ():
+    fiducial_m_pk = fiducial_m_pk - f_sn[:, None]
 
 # fiducial_poles = np.concatenate((fiducial_m_pk-sn, fiducial_q_pk, fiducial_h_pk))
 

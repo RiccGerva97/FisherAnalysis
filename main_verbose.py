@@ -10,6 +10,8 @@ from functions.parsers import cosmo_parser
 from functions.math import Hartlap
 from functions.pcg import randind
 
+print(f'Progress:  |-------|  {round(0/21*100, 2)}%', end='\r')
+
 # name of the files typology
 TYPE_FILE = '3D_cubes'
 
@@ -58,6 +60,8 @@ for FC in range(len(files_to_read_wst)):
         errbar_wst_rsd[index] = np.std(every_wst, axis=0)
     else:
         assert False, 'Undefined space in '+files_to_read_wst[FC]
+
+print(f'Progress:  |/------|  {round(1/21*100, 2)}%', end='\r')
 
 ## reading Pk values
 # it's assumed you calculate three multipoles, if not comment/delete the unnecessary lines...
@@ -112,6 +116,8 @@ for FC in range(len(files_to_read_pk)):
         errbar_q_pk_rsd[index] = np.std(every_power_q, axis=0)
     else: assert False, f'Undefined space in {currfile}'
 
+print(f'Progress:  |\------|  {round(2/21*100, 2)}%', end='\r')
+
 every_mean_poles_rsd = np.zeros((len(order_folders), 3*num_pk))
 if bool_rsd:
     for i in order_folders:
@@ -123,6 +129,8 @@ if not  np.shape(sn) == ():
     every_mean_m_pk = every_mean_m_pk - sn[:, None]
     if bool_rsd:
         every_mean_m_pk_rsd = every_mean_m_pk_rsd - sn_rsd[:, None]
+
+print(f'Progress:  |+------|  {round(3/21*100, 2)}%', end='\r')
 
 # ------------- DERIVATES -------------------------------------------------------------------------------
 
@@ -181,6 +189,8 @@ for i in cosmological_pars:
             derivates_wst_rsd[order_dimension['Ob']]    = (every_mean_wst_rsd[order_folders[i+"2_p"]] - every_mean_wst_rsd[order_folders[i+"2_m"]]) / (2*VarCosmoPar['d_'+i+"2"])
             derivates_pk_rsd[order_dimension['Ob']] = (every_mean_poles_rsd[order_folders[i+"2_p"]] - every_mean_poles_rsd[order_folders[i+"2_m"]]) / (2*VarCosmoPar['d_'+i+"2"])
 
+print(f'Progress:  |+/-----|  {round(4/21*100, 2)}%', end='\r')
+
 # ---------------- COEFFICIENTS COVARIANCE MATRIX ----------------------------------------------------------------------------------------
 
 # initializing empty fiducial arrays
@@ -196,6 +206,8 @@ with h5py.File(root_WST+'fiducial_wst_real.hdf5', 'r') as fh:
         dat = np.array(fh[key])
         fiducial_wst.append(dat)
 
+print(f'Progress:  |+\-----|  {round(5/21*100, 2)}%', end='\r')
+
 ## Read Pk files
 #with h5py.File(root_Pk+'fiducial_pk_real.hdf5', 'r') as f:
 with h5py.File(root_Pk+'fiducial_pk_nbk_real.hdf5', 'r') as f:
@@ -209,6 +221,8 @@ with h5py.File(root_Pk+'fiducial_pk_nbk_real.hdf5', 'r') as f:
         elif 'sn'    in key: sn_f.append(dat)
         else: assert False, fr'keyword {key} not found in `if` code'
 
+print(f'Progress:  |++-----|  {round(6/21*100, 2)}%', end='\r')
+
 # if you choose a minor number of fiducial realizations, here the diluition is executed
 if max_fids < len(fiducial_m_pk):
     new_indices = randind(len(fiducial_m_pk, max_fids))
@@ -220,6 +234,8 @@ if max_fids < len(fiducial_m_pk):
     if not  np.shape(sn_f) == ():
         sn_f = sn_f[new_indices,:]
 
+print(f'Progress:  |++/----|  {round(7/21*100, 2)}%', end='\r')
+
 # remove shot noise
 if not  np.shape(sn) == ():
     fiducial_m_pk = fiducial_m_pk - sn_f[:, None]
@@ -228,14 +244,21 @@ if not  np.shape(sn) == ():
 fiducial_wst = np.array(fiducial_wst).transpose()
 fiducial_m_pk = np.array(fiducial_m_pk).transpose()
 
+print(f'Progress:  |++\----|  {round(8/21*100, 2)}%', end='\r')
+
 # covariance matices
 cov_wst = np.cov(fiducial_wst)
+print(f'Progress:  |++*----|  {round(8.5/21*100, 2)}%', end='\r')
 cov_pk = np.cov(fiducial_m_pk)
     
+print(f'Progress:  |+++----|  {round(9/21*100, 2)}%', end='\r')
 
 # invese matrices with Hartlap formalism
 Hart_wst = Hartlap(cov_wst, max_fids)
+print(f'Progress:  |+++^---|  {round(9.5/21*100, 2)}%', end='\r')
 Hart_pk  = Hartlap(cov_pk, max_fids)
+
+print(f'Progress:  |+++/---|  {round(10/21*100, 2)}%', end='\r')
 
 # initialize empty FIMs
 Fish_wst, Fish_pk = np.zeros((n_pars,n_pars)), np.zeros((n_pars,n_pars))
@@ -245,14 +268,21 @@ for a in range(6):
         Fish_wst[a, b] = np.sum(np.dot(derivates_wst[a], np.dot(Hart_wst, np.transpose(derivates_wst[b]))))
         Fish_pk[a, b] = np.sum(np.dot(derivates_pk[a], np.dot(Hart_pk, np.transpose(derivates_pk[b]))))
 
+print(f'Progress:  |+++\---|  {round(11/21*100, 2)}%', end='\r')
+
 # get the inverse FIM aka (co)variances
 inverse_wst = np.linalg.inv(Fish_wst)
+print(f'Progress:  |+++*---|  {round(11.5/21*100, 2)}%', end='\r')
 inverse_pk = np.linalg.inv(Fish_pk)
+
+print(f'Progress:  |++++---|  {round(12/21*100, 2)}%', end='\r')
 
 # write results on file
 with h5py.File('./inv_FIM_est.hdf5', 'a') as wf:
     dataset_wst_real = wf.create_dataset('inv_wst_real', data = inverse_wst)
     dataset_pk_real = wf.create_dataset('inv_pk_real', data = inverse_pk)
+
+print(f'Progress:  |++++/--|  {round(13/21*100, 2)}%', end='\r')
 
 # the same as before, but about redshift space
 if bool_rsd:
@@ -267,6 +297,8 @@ if bool_rsd:
             dat = np.array(fh[key])
             fiducial_wst_rsd.append(dat)
 
+    print(f'Progress:  |++++\--|  {round(14/21*100, 2)}%', end='\r')
+
     with h5py.File(root_Pk+'fiducial_pk_nbk_rsd.hdf5', 'r') as f:
         for key in f.keys():
             dat = np.array(f[key])
@@ -277,8 +309,11 @@ if bool_rsd:
             elif 'sn'   in key: sn_f_rsd.append(dat)
             else: assert False, f'keyword {k} not found in `if` code'
 
+    print(f'Progress:  |+++++--|  {round(15/21*100, 2)}%', end='\r')
+
     if max_fids < len(fiducial_wst_rsd):
         new_indices = randind(len(fiducial_wst_rsd, max_fids))
+        print(f'Progress:  |+++++^-|  {round(15.5/21*100, 2)}%', end='\r')
         fiducial_wst = fiducial_wst[new_indices,:]
         fiducial_m_pk_rsd = fiducial_m_pk_rsd[new_indices] 
         fiducial_q_pk_rsd = fiducial_q_pk_rsd[new_indices]
@@ -286,6 +321,8 @@ if bool_rsd:
         k_rsd = k_rsd[new_indices]
         if not  np.shape(sn_f_rsd) == ():
             sn_f_rsd = sn_f_rsd[new_indices]
+
+    print(f'Progress:  |+++++/-|  {round(16/21*100, 2)}%', end='\r')
 
     # remove shot noise
     if not  np.shape(sn) == ():
@@ -298,10 +335,16 @@ if bool_rsd:
     fiducial_poles_rsd = np.array(fiducial_poles_rsd).transpose()
 
     cov_wst_rsd = np.cov(fiducial_wst_rsd)
+    print(f'Progress:  |+++++!-|  {round(16.5/21*100, 2)}%', end='\r')
     cov_pk_rsd = np.cov(fiducial_poles_rsd)
 
+    print(f'Progress:  |+++++\-|  {round(17/21*100, 2)}%', end='\r')
+
     Hart_wst_rsd = Hartlap(cov_wst_rsd, max_fids)
+    print(f'Progress:  |+++++*-|  {round(17.5/21*100, 2)}%', end='\r')
     Hart_pk_rsd = Hartlap(cov_pk_rsd, max_fids)
+
+    print(f'Progress:  |++++++-|  {round(18/21*100, 2)}%', end='\r')
 
     Fish_wst_rsd, Fish_pk_rsd = np.zeros((n_pars,n_pars)), np.zeros((n_pars,n_pars))
 
@@ -310,10 +353,18 @@ if bool_rsd:
             Fish_wst_rsd[a, b] = np.sum(np.dot(derivates_wst_rsd[a], np.dot(Hart_wst_rsd, np.transpose(derivates_wst_rsd[b]))))
             Fish_pk_rsd[a, b] = np.sum(np.dot(derivates_pk_rsd[a], np.dot(Hart_pk_rsd, np.transpose(derivates_pk_rsd[b]))))
 
+    print(f'Progress:  |++++++/|  {round(19/21*100, 2)}%', end='\r')
+
     inverse_wst_rsd = np.linalg.inv(Fish_wst_rsd)
+    print(f'Progress:  |++++++!|  {round(19.5/21*100, 2)}%', end='\r')
     inverse_pk_rsd = np.linalg.inv(Fish_pk_rsd)
+
+    print(f'Progress:  |++++++\|  {round(20/21*100, 2)}%', end='\r')
+
 
     # write results on file
     with h5py.File('./inv_FIM_est.hdf5', 'a') as wf:
         dataset_wst_rsd = wf.create_dataset('inv_wst_rsd', data = inverse_wst_rsd)
         dataset_pk_rsd  = wf.create_dataset('inv_pk_rsd',  data = inverse_pk_rsd)
+
+    print(f'Progress:  |+++++++|  {round(21/21*100, 2)}%\nEND\n')

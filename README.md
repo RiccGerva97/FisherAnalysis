@@ -60,6 +60,10 @@ There are two functions to get the width, height, and angle of a generic ellipse
 
 Main code to evaluate the inverse of the FIM if two estimators are used in real space; there's anoption to evaluate togheter the redshift space.
 
+### main_verbose.py
+
+As main.py, but with print functions that show the percentage of execution (the code is a bit more unreadable).
+
 ### main_slim.py
 
 The simplier version of main: no space info and only one estimator. It is assumed there is not a structure in 'multipoles' such as with the power spectrum.
